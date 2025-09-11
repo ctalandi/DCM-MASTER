@@ -14,7 +14,8 @@ mkdir -p $TMPDIR
 #    scratchdir with large  quota, but eventually  cleaned automatically : DDIR
 # CDIR is always set in DCM setup, DDIR is set to CDIR if not previously set
 
-DDIR=${DDIR:-$CDIR}
+##DDIR=${DDIR:-$CDIR}
+DDIR=${DDIR:-$WORKDIR}
 RST_DIR=${RST_DIR:-0}
 RST_READY=${RST_READY:-0}
 
@@ -111,7 +112,8 @@ echo " ======================================"
 IOIPSL=0  # probably never used except with test cases ( if no XIOS ? )
 
 AGRIF=0   ;  if [ $(keychk key_agrif  )  ] ; then AGRIF=1   ; fi
-XIOS=0    ;  if [ $(keychk key_iomput )  ] ; then XIOS=1    ; DIROUText='XIOS'    ; fi
+XIOS=0    ;  if [ $(keychk key_xios )    ] ; then XIOS=1    ; DIROUText='XIOS'    ; fi
+#XIOS=0    ;  if [ $(keychk key_iomput )  ] ; then XIOS=1    ; DIROUText='XIOS'    ; fi
 ICE=0     ;  if [ $(keychk key_si3    )  ] ; then ICE=1     ; fi
 TOP=0     ;  if [ $(keychk key_top )     ] ; then TOP=1     ; fi
 FLOAT=0   ;  if [ $(keychk key_floats)   ] ; then FLOAT=1   ; fi
@@ -127,7 +129,6 @@ CFC=0 ; C14=0 ; MYTRC=0
 #@@@@@@@@ FLXISH=0  ;  if [ $(keychk key_iceshelf) ] ; then FLXISH=1  ; fi   ===> ln_isf
 #@@@@@@@@ DIAOBS=0  ;  if [ $(keychk key_diaobs )  ] ; then DIAOBS=1  ; fi
 
-
 # 
 ## check if we are using new xml layout (ie with files like 04-files.xml
 NEWXML=0
@@ -140,6 +141,7 @@ echo "   *** NEWXML = " $NEWXML
 
 ## copy of the control files ( .db and and template namelist )
 rcopy $P_CTL_DIR/namelist.${CONFIG_CASE} namelist
+rcopy $P_CTL_DIR/namelist_ref namelist_ref
 rcopy $P_CTL_DIR/$CONFIG_CASE.db ./
 
 if [ $AGRIF = 1 ] ; then
@@ -160,11 +162,13 @@ echo " ====================="
 no=`tail -1 $CONFIG_CASE.db | awk '{print $1}' `
 nit000=`tail -1 $CONFIG_CASE.db | awk '{print $2}' `
 nitend=`tail -1 $CONFIG_CASE.db | awk '{print $3}' `
+prev_ext=$(( $no - 1 ))
 
 if [ $no != 1 ] ; then
     restart_flag=true
 else
     restart_flag=false
+    prev_ext=1
 fi
 
 sed -e "s/<NN_NO>/$no/" \
@@ -172,50 +176,17 @@ sed -e "s/<NN_NO>/$no/" \
     -e "s/<NIT000>/$nit000/" \
     -e "s/<NITEND>/$nitend/" \
     -e "s/<RESTART>/$restart_flag/" \
-    -e "s@<CN_DIAOBS>@$DDIR/${CN_DIAOBS}.$no@"   \
-    -e "s@<CN_DIRICB>@$DDIR/${CN_DIRICB}.$no@"   \
+    -e "s/<OCERST_IN>/restart-$prev_ext/" \
+    -e "s/<OCERST_OUT>/restart/" \
+    -e "s@<CN_IN_OCERST>@$DDIR/${CN_DIRRST}.$prev_ext@"   \
+    -e "s@<CN_OUT_OCERST>@$DDIR/${CN_DIRRST}.$no@"  \
     -e "s@<CN_DIRRST>@$DDIR/${CN_DIRRST}@"   namelist > znamelist1
 \cp znamelist1 namelist
-\cp namelist  namelist_ref
-\cp namelist  namelist_cfg
 
-# Use of the observation operator.
-DIAOBS=0
- tmp=$(LookInNamelist ln_diaobs namelist_cfg namobs ) ; tmp=$(normalize $tmp)
- if [ $tmp = T ] ; then DIAOBS=1 ; fi
- echo "   ***  DIAOBS  = $DIAOBS"
-
-if [ $DIAOBS = 1 ] ; then
-    missing_err=0
-    # check if datfinyyyy and fbcomb are available
-    chkfile $P_UTL_DIR/bin/datfinyyyy
-    if [ $? = 0 ] ; then
-        rcopy $P_UTL_DIR/bin/datfinyyyy ./datfinyyyy
-    else
-        echo "   === ERROR : missing datfinyyyy with diaobs in use "
-        echo "       (Must be in $P_UTL_DIR/bin. Sources are in $RUN_TOOLS/UTILS )"
-        missing_err=$(( missing_err + 1 ))
-    fi
-
-#    chkfile $P_UTL_DIR/bin/fbcomb.exe
-#    if [ $? = 0 ] ; then
-#        rcopy $P_UTL_DIR/bin/fbcomb.exe ./fbcomb.exe
-#    else
-#        echo "   === ERROR : missing fbcomb with diaobs in use "
-#        echo "       (Must be in $P_UTL_DIR/bin. Sources are in TOOLS/OBSTOOLS ) "
-#        missing_err=$(( missing_err + 1 ))
-#    fi
-
-    if [ $missing_err != 0 ] ; then exit 1 ; fi
-
+if [ $DIAOBS = 1 ] ; then  # modify namelist block namobs (and get data files)
     # Observation operator
     ENACT=0  
     tmp=$(LookInNamelist ln_ena) ; tmp=$(normalize $tmp)
-    if [ $tmp = T ] ; then ENACT=1 ; fi
-# NEMO4 uses other flags 
-    tmp=$(LookInNamelist ln_t3d) ; tmp=$(normalize $tmp)
-    if [ $tmp = T ] ; then ENACT=1 ; fi
-    tmp=$(LookInNamelist ln_s3d) ; tmp=$(normalize $tmp)
     if [ $tmp = T ] ; then ENACT=1 ; fi
 
     SLA=0
@@ -227,6 +198,8 @@ if [ $DIAOBS = 1 ] ; then
     getobs
 fi
 
+#\cp namelist  namelist_ref
+\cp namelist  namelist_cfg
 
 ## Agrif namelist update if any
 if [ $AGRIF = 1 ] ; then
@@ -271,7 +244,7 @@ if [ $RST_DIRS = 1 ] ; then
     mkdir -p $DDIR/${CN_DIRRST}.$no
 fi
 
-rdt=$(LookInNamelist rn_rdt)
+rdt=$(LookInNamelist rn_Dt)
 
 ## place holder for time manager (eventually)
 if [ $no != 1 ] ; then
@@ -295,19 +268,18 @@ echo "   ***  Time step is: $rdt "
 ndays=` echo 1 | awk "{ a=int( ($nitend - $nit000 +1)*$rdt /86400.) ; print a }" `
 ndastpfin=`./datfinyyyy $ndastpdeb $ndays `
 echo "   ***  $ndays days to run, starting $ndastpdeb ending $ndastpfin"
-## update time windows for OBS (in any case)
-cat namelist_cfg | sed -e "s/<RN_DOBSINI>/${ndastpdeb}.000000/" \
-                       -e "s/<RN_DOBSEND>/${ndastpfin}.000000/" > znamelist
-mv znamelist namelist_cfg
-cp namelist_cfg namelist_ref
 
 if [ $TOP = 1 ] ; then 
     echo ' [2.2]  Tracer namelist(s)'
     echo " ========================="
-    rcopy $P_CTL_DIR/namelist_top ./
-    sed -e "s@<CN_DIRRST>@$DDIR/${CN_DIRRST}@"   namelist_top > ztmpnmtop
-    mv ztmpnmtop namelist_top
-    cp namelist_top namelist_top_ref
+    rcopy $P_CTL_DIR/namelist_top.${CONFIG_CASE} .
+    rcopy $P_CTL_DIR/namelist_top_ref namelist_top_ref
+    sed -e "s/<TRCRST_IN>/restart_trc-$prev_ext/" \
+        -e "s/<TRCRST_OUT>/restart_trc/" \
+        -e "s/<RESTART>/$restart_flag/" \
+        -e "s@<CN_IN_TRCRST>@$DDIR/${CN_DIRRST}.$prev_ext@"   \
+        -e "s@<CN_OUT_TRCRST>@$DDIR/${CN_DIRRST}.$no@"  namelist_top.${CONFIG_CASE} > ztmp
+    mv ztmp namelist_top
     cp namelist_top namelist_top_cfg
     if [ $CFC = 1    ] ; then rapatrie $CFCATM $P_I_DIR $F_DTA_DIR $NEMO_CFCATM ; fi
   # if [ $C14 = 1    ] ; then rapatrie $CO2 $P_I_DIR $F_DTA_DIR $NEMO_CO2 ; fi
@@ -315,14 +287,20 @@ if [ $TOP = 1 ] ; then
     if [ $CFC = 1    ] ; then rcopy $P_CTL_DIR/namelist_cfc ./ ; fi
   # if [ $C14 = 1    ] ; then rcopy $P_CTL_DIR/namelist_c14 ./ ; fi
   # if [ $MYTRC = 1  ] ; then rcopy $P_CTL_DIR/namelist_mytrc ./ ; fi
+    rcopy $P_CTL_DIR/namelist_pisces.${CONFIG_CASE} namelist_pisces_cfg
+    rcopy $P_CTL_DIR/namelist_pisces_ref .
 fi
 
 if [ $ICE != 0 ] ; then
     echo ' [2.3]  Ice namelist'
     echo " ========================="
     rcopy $P_CTL_DIR/namelist_ice.${CONFIG_CASE} namelist_ice
-    sed -e "s@<CN_DIRRST>@$DDIR/${CN_DIRRST}@"   namelist_ice > ztmpnmice
-    mv ztmpnmice namelist_ice
+    sed -e "s/<ICERST_IN>/restart_ice-$prev_ext/" \
+        -e "s/<ICERST_OUT>/restart_ice/" \
+        -e "s@<CN_IN_ICERST>@$DDIR/${CN_DIRRST}.$prev_ext@"   \
+        -e "s@<CN_OUT_ICERST>@$DDIR/${CN_DIRRST}.$no@"  \
+    sed -e "s@<CN_DIRRST>@$DDIR/${CN_DIRRST}@"   namelist_ice > ztmp
+    mv ztmp namelist_ice
     cp namelist_ice namelist_ice_ref
     cp namelist_ice namelist_ice_cfg
     if [ $AGRIF = 1 ] ; then
@@ -545,12 +523,42 @@ fi
 echo "   ***  STO  = $STO"
 echo "   ***  RSTO = $RSTO"
 
+# Use of the observation operator.
+DIAOBS=0
+ tmp=$(LookInNamelist ln_diaobs namelist_cfg namobs ) ; tmp=$(normalize $tmp)
+ if [ $tmp = T ] ; then DIAOBS=1 ; fi
+ echo "   *** DIAOBS  = $DIAOBS"
+
+if [ $DIAOBS = 1 ] ; then
+    missing_err=0
+    # check if datfinyyyy and fbcomb are available
+    chkfile $P_UTL_DIR/bin/datfinyyyy
+    if [ $? = 0 ] ; then
+        rcopy $P_UTL_DIR/bin/datfinyyyy ./datfinyyyy
+    else
+        echo "   === ERROR : missing datfinyyyy with diaobs in use "
+        echo "       (Must be in $P_UTL_DIR/bin. Sources are in $RUN_TOOLS/UTILS )"
+        missing_err=$(( missing_err + 1 ))
+    fi
+
+    chkfile $P_UTL_DIR/bin/fbcomb.exe
+    if [ $? = 0 ] ; then
+        rcopy $P_UTL_DIR/bin/fbcomb.exe ./fbcomb.exe
+    else
+        echo "   === ERROR : missing fbcomb with diaobs in use "
+        echo "       (Must be in $P_UTL_DIR/bin. Sources are in TOOLS/OBSTOOLS ) "
+        missing_err=$(( missing_err + 1 ))
+    fi
+
+    if [ $missing_err != 0 ] ; then exit 1 ; fi
+
+fi
 
 
 if [ $XIOS = 1 ] ; then
     echo ' [2.6]  XML files for XIOS'
     echo " ========================="
-    cp $P_CTL_DIR/*xml ./
+    cp $P_CTL_DIR/XML/*xml ./
 #   rcopy $P_CTL_DIR/field_def.xml field_def.xml
 #   rcopy $P_CTL_DIR/domain_def.xml domain_def.xml
 #   if [ $XIOS2 = 1 ] ; then
@@ -627,48 +635,16 @@ eof
     cat $xml_fil | sed -e "s@<OUTDIR>@$DDIR/${CONFIG_CASE}-XIOS.$no@"  \
         -e "s@<MOORDIR>@$DDIR/${CONFIG_CASE}-MOORINGS.$no@" \
         -e "s/<CONFIG>/$CONFIG/" -e "s/<CASE>/$CASE/" \
-        -e "s/<NDATE0>/$ndate0/" > ztmpxml
-    mv ztmpxml $xml_fil
+        -e "s/<NDATE0>/$ndate0/" > ztmp
+    mv ztmp $xml_fil
    done
 #    if [ $XIOS2 = 1 ] ; then
 #       cat file_def.xml | sed -e "s@<OUTDIR>@$DDIR/${CONFIG_CASE}-XIOS.$no@"  \
 #        -e "s@<MOORDIR>@$DDIR/${CONFIG_CASE}-MOORINGS.$no@" \
 #        -e "s/<CONFIG>/$CONFIG/" -e "s/<CASE>/$CASE/" \
-#        -e "s/<NDATE0>/$ndate0/" > ztmpxml2
-#       mv ztmpxml2 file_def.xml
+#        -e "s/<NDATE0>/$ndate0/" > ztmp
+#       mv ztmp file_def.xml
 #    fi
-# Check for specific iom_put 
-   STERIC=0
-   xmldef=file_def_nemo-oce.xml
-   # look for specific field_ref in file_def xml file
-   grep -q -w 'field field_ref="sshthst"' $xmldef
-   if [ $? = 0 ] ; then
-   # look for comment
-     com=$( grep -w 'field field_ref="sshthst"' $xmldef | awk '{print $1}' )
-     # if many lines in file_def with requested field, com will have many words. Check first..;
-     com=$( echo $com | awk '{print $1}' )
-     if [ $com = '<!--' ] ; then
-       STERIC=0
-     else
-       # look for enabled= syntax
-       grep  -w 'field field_ref="sshthst"' $xmldef  | grep enabled
-       if [ $? != 0 ] ; then
-         STERIC=1
-       else
-         grep  -w 'field field_ref="sshthst"' $xmldef  | grep true
-         if [ $? = 0 ] ; then
-           STERIC=1
-         else
-           STERIC=0
-         fi
-       fi
-     fi
-  else
-     STERIC=0
-  fi
-  echo "   *** STERIC = " $STERIC
-
-
 
 fi
 #--------------------------------------
@@ -719,11 +695,6 @@ if [ $ISF = 1 ] ; then
     getisf
 fi
 
-## TS climatology for STERIC SSH 
-if [ $STERIC = 1 ] ; then
-    getsteric
-fi
-
 ## diaobs : for memory : needed files are already copied (when updating namelist)
 
 ## diaptr subbasins mask
@@ -746,6 +717,15 @@ fi
 
 if [ $DYNCOEF3D = 1 ] ; then
     rapatrie $AHM3D  $P_I_DIR $F_DTA_DIR $NEMO_AHM3D
+fi
+
+if [ $MYADDFI = 1 ] ; then
+    # Ice initial file 
+    rapatrie $ICEINI  $P_DTA_DIR $F_DTA_DIR $NEMO_ICEINI
+    # WOA09 SST file 
+    rapatrie $WOA09SST  $P_DTA_DIR $F_DTA_DIR $NEMO_WOA09SST
+    # WOA09 reshape SST file 
+    rapatrie $RESH_WOA09SST  $P_WEI_DIR $F_WEI_DIR $NEMO_RESH_WOA09SST
 fi
 
 
@@ -797,6 +777,9 @@ if [ $BDY = 1 ] ; then
     getbdy   # This function look for information in the namelist on how many bdy there are.
              # Then it looks for the name of the file to be imported and rapatrie the set of files
              # needed by the current segment, in the TMPDIR directory.
+    if [ $TOP = 1 ] ; then 
+        getbdy_bio   # This function look for information in the namelist on how many bdy there are.
+    fi
 fi
 
 echo ' [3.5] : restart files'
@@ -846,8 +829,8 @@ else
                 ok=1
 
                 if [ ! $RST_SKIP  ] ; then 
-         # ** check if the nc  restart file are in the current dir 
-         #   Look for restart_xxxx.nc.$prev_ext  xxx=1,$procn
+         # ** check if the dimg/nc  restart file are in the current dir 
+         #   Look for restart_xxxx.dimg.$prev_ext  xxx=1,$procn
                     for (( proc=$proc0 ; proc <= $procn ; proc++ )) ; do
                         rest=$(printf "${OCE_RST_IN}_${format}.${filext}.$prev_ext\n" $proc)
                         if [ ! -f ${zrstdir}$rest ] ; then ok=0 ; fi
@@ -928,7 +911,7 @@ else
 ################### 
 # Missing option RST_DIRS for TRACERS in case of global restart ...
             if [ $TOP = 1 ] ; then
-                rsttrc=$(LookInNamelist lrsttr namelist_top) 
+                rsttrc=$(LookInNamelist ln_rsttr namelist_top) 
 
        # test if lrsttr is true or false. If true, then next line return a 1 status ($? )
                 echo $rsttrc | grep -q false
@@ -1105,7 +1088,7 @@ echo '------------------------------'
  # gives the rights r to go
 chmod -R go+r  $TMPDIR
 cp layout.dat $P_S_DIR/ANNEX/
-  ntiming=0 ; nmsh=0
+
   # check flags in namelist for further processing (before changing namelist)
   tmp=$(LookInNamelist ln_timing ) ; tmp=$( normalize $tmp )
   if [ $tmp = 'T' ] ; then ntiming=1 ; fi  
@@ -1120,7 +1103,7 @@ for member in $(seq $ENSEMBLE_START $ENSEMBLE_END) ; do
     mmm=$(getmember_extension $member)
     outfile=ocean.output$mmm
     # should be modified in NEMO to make it safer ( eg. write(numout,*) ' Run completed successfully'  )
-    if [ "$(tail -20 $outfile | grep AAAAAAAA)" = 'AAAAAAAA' ] ; then touch OK$mmm ; nok=$(( nok + 1 )); fi
+    if [ "$(tail -50 $outfile | grep AAAAAAAA)" = 'AAAAAAAA' ] ; then touch OK$mmm ; nok=$(( nok + 1 )); fi
 
 done
 
@@ -1148,9 +1131,9 @@ case $STOP_FLAG in
     echo "   ***  Run OK"
     echo ' [5.2] rename  the restart files'
     echo ' ==============================='
-    if [ $RST_READY = 1 ] ; then
-       echo "   *** Restart files are ready from NEMO ..."
-    else
+    #if [ $RST_READY = 1 ] ; then
+    #   echo "   *** Restart files are ready from NEMO ..."
+    #else
     for member in  $(seq $ENSEMBLE_START $ENSEMBLE_END) ; do
         mmm=$(getmember_extension $member)
         nnn=$(getmember_extension $member nodot)
@@ -1216,7 +1199,7 @@ case $STOP_FLAG in
         fi
 
     done      # loop on members
-    fi   # RST_READY
+    #fi   # RST_READY
 
     date
     echo ' [5.3] Update the CONFIG_CASE.db file'
@@ -1242,7 +1225,7 @@ case $STOP_FLAG in
 
      # Submit the save-restart script 
      # When this script is finished ( asynchronously), there is a touch statement on file RST_DONE$mmm.$ext,
-     # that need to be checked before cleaning. 
+     # that need to be checked before cleaning. ( see interactive script clean_dimg_restart.sh ) 
     submit ${P_CTL_DIR}/zsrst.$ext.sh
     cd $TMPDIR   # back in TMPDIR for sure
 
@@ -1364,10 +1347,26 @@ case $STOP_FLAG in
           fi
           cd $TMPDIR
         fi
+
+	# Process Monthly mean scalar files first 
+	##########################################
+	if [ $SCALARS = 1 ] ; then 
+
+                cd  $DDIR/${CONFIG_CASE}-${DIROUText}.$ext
+
+		f=`ls ${CONFIG}-${CASE}_1m_OCE_scalar_*01_0000.nc`
+                tmp=${f##*-} ; indastp=${tmp%.nc}
+                zyear=${indastp:0:4}
+		mk_scal_mon $zyear
+
+         	cd $TMPDIR  
+	fi
+
+
         # look for one-file or multiple_file mode (for global files)
         # file_definition is defined only once (must be) in iodef.xml file
         # if zoom are used, one_file is forced at the level of the file object
-        MULTIPLE_FILE=$( grep '<file_definition' iodef.xml | \
+        MULTIPLE_FILE=$( grep '<file_definition' file_def_nemo-oce.xml | \
             awk '{ i=1 ; while (i <= NF ) { print $i ; i++ } }' | \
             grep type | grep -q 'one_file' ; echo $? )
         # also check if there is only 1 XIOS server ==> ONE_FILE

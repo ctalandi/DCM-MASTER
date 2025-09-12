@@ -25,18 +25,18 @@ NEMO_REF_CASE = none
 
 
 # REFONLY ( yes or no : if yes, only reference is used, not the drakkar customs)
-REFONLY = 'no'
+REFONLY = 'yes'
 
 # MACHINE : name of architecture for compilation. Assume that a arch_${MACHINE}.fcm exists in ARCH 
 # to know available arch_xxx.fcm, use dcm_lsarch. You can edit/add your own arch_xxx.fcm in
 # CONFIG-CASE/ARCH/ directory
-MACHINE = GCC_MEOM
+MACHINE = X64_DATARMORMPI
 
 # COMPUTER is the name of the machine on which the experiement will be run. Used for make ctl only
-COMPUTER = jean-zay  # one of jean-zay irene occigen ...
+COMPUTER = DATARMOR  # one of jean-zay irene occigen ...
 
 # NCOMPIL_PROC : number of procs to use for the compilation of the code.
-NCOMPIL_PROC = 1
+NCOMPIL_PROC = 128
 
 # set to 'use' the NEMO component required for this config, to anything else  if notused
 OCE = 'use'
@@ -45,7 +45,7 @@ TOP = 'notused'
 OFF = 'notused'
 NST = 'notused'
 SAS = 'notused'
-MY_SRC='notused'
+MY_SRC='use'
 # if set to 'check' maintain an 'install_history' file giving 
 #  the date of install and the git hash of $HOMEDCM
 GIT = 'check'

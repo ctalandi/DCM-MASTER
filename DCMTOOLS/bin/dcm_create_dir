@@ -7,7 +7,7 @@ usage()  {
    printf "${bld}USAGE :$k  $(basename $0) [-h] [-c] \n"
    echo
    printf "  ${bld}PURPOSE:$k \n"
-   echo "     Create a NEMO4 src tree at current src position "
+   echo "     Create a NEMO src tree at current src position "
    echo "     You must use this script in a 'src' directory."
    echo
    printf "  ${bld}ARGUMENTS:$k \n"
@@ -15,8 +15,9 @@ usage()  {
    echo
    printf "  ${bld}OPTIONS:$k \n"
    echo "    -h : print this help message and exit."
-   echo "    -c : clone NEMO4 src tree from NEMOREF/NEMO4 "
-   echo "        Default is to create hard coded list of directory"
+   echo "    -c : clone default nemo release src tree from NEMOREF/nemo_4.2.3 "
+   echo "         Default is to create hard coded list of directory"
+   echo "    -r : specify which version to clone and located in NEMOREF directory "
    echo
    exit 0
         }
@@ -37,11 +38,13 @@ str="\033[9m"
             }
 # command parser
 clone=''
+lrelease=nemo_4.2.3
 set_color
-while getopts :hc opt ; do
+while getopts :hcr opt ; do
    case $opt in
      (h) usage ;;
      (c) clone=yes ;;
+     (r) lrelease=$OPTARG ;;
      (*) usage ;;
     esac
 done
@@ -54,15 +57,15 @@ if [ $src != src ] ; then
 fi
 
 if [ $clone ] ; then
-   printf " ${bld}CLONING${k} NEMO4 tree from ${r}$(basename $( dirname ${HOMEDCM}))/NEMOREF/NEMO4/src${k} \n"
-   lst=$( ls -R ${HOMEDCM}/NEMOREF/NEMO4/src | grep '/' | tr -d ':' )
+   printf " ${bld}CLONING${k} ${lrelease} tree from ${r}$(basename $( dirname ${HOMEDCM}))/NEMOREF/${lrelease}/src${k} \n"
+   lst=$( ls -R ${HOMEDCM}/NEMOREF/${lrelease}/src | grep '/' | tr -d ':' )
    for d in $lst ; do
      loc=$( echo .${d#*src})
      mkdir -p $loc
    done
 
 else
-   printf " ${bld}HARD CODED${k} creation of NEMO4 tree (default)  \n"
+   printf " ${bld}HARD CODED${k} creation of ${lrelease} tree (default)  \n"
 mkdir -p ./ABL
 mkdir -p ./ICE
 mkdir -p ./NST

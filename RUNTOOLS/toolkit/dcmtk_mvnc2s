@@ -52,6 +52,11 @@ xios_mvnc2s() {
                  year=${tag:1:4}
                  mkdir -p $DDIR/$CONFIG/${CONFIG}-${CASE}-S/$freq/$year/
                  mv $f  $DDIR/$CONFIG/${CONFIG}-${CASE}-S/$freq/$year/
+                 # To move scalar files 
+                 for f in ../${CONFIG}-${CASE}_*scalar_*-*.nc ; do
+                    ftype=` echo $f | awk -F_ '{print $3}'`
+                    mv  $f  $DDIR/$CONFIG/${CONFIG}-${CASE}-S/${freq}/$year/${CONFIG}-${CASE}_y${year}.${freq}_${ftype}_scalar.nc 
+                 done
               done
             else
                echo no files to transmit in $d
@@ -117,6 +122,7 @@ fi
 
 DDIR=${DDIR:-$CDIR}
 if [ $MACHINE = 'jean-zay' ] ; then DDIR=$WORK ; fi
+if [ $MACHINE = 'datarmor' ] ; then DDIR=/scale/project/drakkarcom/SIMULATION-OUTPUTS/CLIMARCTIC/MYLOGIN ; fi
 
 # look for ensemble run ? (in this case nnn subdirectory (3digits) 
 

@@ -1590,7 +1590,7 @@ mk_nav_lonlat()   {
     unlim=''
     ncdump -h $coord | grep -iq UNLIMITED
     if [ $? = 0 ] ; then unlim=1 ; fi
-    zvar='time'
+    zvar='t'
     ncdump -h $coord | grep -iq 'z ='
     if [ $? = 0 ] ; then zvar='z,time' ; fi
 

@@ -1539,6 +1539,7 @@ post_process_one_file()  {
                   ${CONFIG_CASE}*_${zoomid}gridTsurf_*-*.nc  \
                   ${CONFIG_CASE}*_${zoomid}gridiT_*-*.nc  \
                   ${CONFIG_CASE}*_${zoomid}ptrcT_*-*.nc  \
+                  ${CONFIG_CASE}*_${zoomid}diadT_*-*.nc  \
                   ${CONFIG_CASE}*_${zoomid}icemod_*-*.nc \
                   ${CONFIG_CASE}*_${zoomid}flxT_*-*.nc \
                   ${CONFIG_CASE}*_${zoomid}gridW_*-*.nc ; do
@@ -1563,7 +1564,9 @@ rename_out() {
             zyy=${zndastp:0:4} ; zyy=${zyy:=0000}
             zmm=${zndastp:4:2} ; zmm=${zmm:=00}
             zdd=${zndastp:6:2} ; zdd=${zdd:=00}
-            if [ ${zfreq} == '1m' ]  ;  then
+            if [ ${zfreq} == '1y' ]  ;  then
+                ztag=y${zyy}.$zfreq
+            elif [ ${zfreq} == '1m' ]  ;  then
                 ztag=y${zyy}m${zmm}.$zfreq
             elif [ ${zfreq} == '5d' ]  ;  then
                 ztag=y${zyy}m${zmm}d${zdd}.$zfreq

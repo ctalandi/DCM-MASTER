@@ -50,6 +50,7 @@ xios_mvnc2s() {
               for f in ${CONFIG}*-${CASE}_y????m??*.${freq}_*.nc ; do
                  tag=$( echo $f | awk -F_ '{print $2}')
                  year=${tag:1:4}
+
                  OUTFREQ='S'
                  if [ ${freq} == '1m' ] ; then OUTFREQ='MEAN' ; fi 
                  mkdir -p /scale/project/drakkarcom/SIMULATION-OUTPUTS/FREDY/CONFIGS/$CONFIG/${CONFIG}-${CASE}-${OUTFREQ}/$freq/$year/
@@ -144,6 +145,8 @@ if [ $tmp  !=  0 ] ; then
 fi
 
 DDIR=${DDIR:-$CDIR}
+if [ $MACHINE = 'jean-zay' ] ; then DDIR=$WORK ; fi
+if [ $MACHINE = 'datarmor' ] ; then DDIR=/scale/project/drakkarcom/SIMULATION-OUTPUTS/CLIMARCTIC/MYLOGIN ; fi
 
 # look for ensemble run ? (in this case nnn subdirectory (3digits) 
 

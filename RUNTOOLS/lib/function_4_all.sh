@@ -1340,22 +1340,24 @@ eof
 
 # Prepare a script for merging files (using mergeproc- off-line).
 # this script is valid for both ensemble and non ensemble run
-  mkbuild_merge() {
-  ###  mk_batch_hdr --name ${1%%.*} --cores $NB_NPROC_MER --wallclock $WALL_CLK_MER \
-  ###             --account $ACCOUNT --cluster hpt  --adapp --queue $QUEUE \
-  ###             --nodes $NB_NNODE_MER --constraint=$CONSTRAI_MER --option '--exclusive' > $1
+mkbuild_merge() {
   mk_batch_hdr --wallclock 2:00:00 --nodes $NB_NNODE_MER > $1
-       echo "  *** building merging script "
-       cat  << eof >> $1
-      . $RUNTOOLS/lib/function_4.sh
-      . $RUNTOOLS/lib/function_4_all.sh
-         DDIR=${DDIR:-$CDIR}
-         zXIOS=$DDIR/${CONFIG_CASE}-XIOS.$ext
-         mergeprog=$(basename $MERGE_EXEC )
-         cd \$zXIOS
-         ln -sf $MERGE_EXEC ./
-             runcode $NB_NPROC_MER ./\$mergeprog -F -c $CN_DOMCFG -r
+
+  echo "  *** building merging script "
+
+  cat  << eof >> $1
+
+  . $RUNTOOLS/lib/function_4.sh
+  . $RUNTOOLS/lib/function_4_all.sh
+  DDIR=${DDIR:-$CDIR}
+  zXIOS=$DDIR/${CONFIG_CASE}-XIOS.$ext
+  mergeprog=$(basename $MERGE_EXEC )
+  cd \$zXIOS
+  ln -sf $MERGE_EXEC ./
+  runcode $NB_NPROC_MER ./\$mergeprog -F -c $CN_DOMCFG -r
+
 eof
+
   copy $1 $P_CTL_DIR
             }
 # ---

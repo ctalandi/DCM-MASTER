@@ -128,12 +128,10 @@ submit() { cd ${P_CTL_DIR}
 
 # function for running OPA : it takes the number of procs and name of program as argument
 runcode() {
-          source /usr/share/Modules/3.2.10/init/bash
-          module purge
-          module load   NETCDF/4.3.3.1-mpt-intel2016  # faster (9:03.32)  but result not exact  as caparmor 
-          module load   nco/4.6.4_gcc-6.3.0
+	  source /usr/share/Modules/init/bash
+	  source /project/oh/drakkar/LIBRAIRIES/NETCDF/env_netcdf_gnu.sh
           module list
-          time $MPI_LAUNCH -n $*
+          time mpirun -n $*
           }
 
 # function for running OPA : it takes the number of procs and name of program as argument
@@ -145,73 +143,38 @@ runcode_u() {
 # function for running OPA ans XIOS : it takes the number of procs and name of programs as argument
 #    runcode_mpmd  nproc1 prog1    nproc2 prog2   ... nprocn progn
 runcode_mpmd() {
-echo 'yes, this was created in functions_3.2_datarmor'
 
-n1=$1
-n2=$3
-prog1=$2
-prog2=$4
-
-
-# get the path for mpirun
-source /usr/share/Modules/3.2.10/init/bash
- module purge
- module load   NETCDF/4.3.3.1-mpt-intel2016  # faster (9:03.32)  but result not exact  as caparmor 
-# module load   NETCDF-test/4.3.3.1-mpt217-intel2018 
- module load   nco/4.6.4_gcc-6.3.0
- module list
-export mpiproc=`cat $PBS_NODEFILE  |wc -l`
-
-echo "submit job with  $NETCDF_MODULE "
-echo "job running with  $mpiproc mpi process  here you should see 30 * 28"
-date
-
-date
-###			time $MPI_LAUNCH -n 28 ${prog1} : \
-###			                 -n 28 ${prog1}  >& output.mpi
-######	time $MPI_LAUNCH -n 28 ${prog1} : -n 1 ${prog2} :    \
-######	                 -n 28 ${prog1} : -n 1 ${prog2} >& output.mpi
-time $MPI_LAUNCH -n 28 ${prog1} : -n 1 ${prog2} :    \
-                 -n 28 ${prog1} : -n 1 ${prog2} :    \
-                 -n 28 ${prog1} : -n 1 ${prog2} :    \
-                 -n 28 ${prog1} : -n 1 ${prog2} :    \
-                 -n 28 ${prog1} : -n 1 ${prog2} :    \
-                 -n 28 ${prog1} : -n 1 ${prog2} :    \
-                 -n 28 ${prog1} : -n 1 ${prog2} >& output.mpi
-date
+               n1=$1
+               n2=$3
+               prog1=$2
+               prog2=$4
+               
+               
+               # get the path for mpirun
+               source /usr/share/Modules/3.2.10/init/bash
+               module purge
+               module load   NETCDF/4.3.3.1-mpt-intel2016  # faster (9:03.32)  but result not exact  as caparmor 
+               module load   nco/4.6.4_gcc-6.3.0
+               module list
+               export mpiproc=`cat $PBS_NODEFILE  |wc -l`
+               
+               echo "submit job with  $NETCDF_MODULE "
+               echo "job running with  $mpiproc mpi process  here you should see 30 * 28"
+               date
+               
+               date
+               time $MPI_LAUNCH -n 28 ${prog1} : -n 1 ${prog2} :    \
+                                -n 28 ${prog1} : -n 1 ${prog2} :    \
+                                -n 28 ${prog1} : -n 1 ${prog2} :    \
+                                -n 28 ${prog1} : -n 1 ${prog2} :    \
+                                -n 28 ${prog1} : -n 1 ${prog2} :    \
+                                -n 28 ${prog1} : -n 1 ${prog2} :    \
+                                -n 28 ${prog1} : -n 1 ${prog2} >& output.mpi
+               date
                }
 # ---
          
 # ---
-# function for running OPA ans XIOS : it takes the number of procs and name of programs as argument
-#    runcode_mpmdOLD  nproc1 prog1    nproc2 prog2   ... nprocn progn
-runcode_mpmdOLD() {
-         narg=$#
-         npair=$(( narg / 2 ))
-         nrest=$(( narg % 2 ))
-
-         if [ $nrest != 0 ] ; then
-           echo " You should give an even number of arguments : pair \( nproc  exec \)"
-           return 1
-         fi
-
-         rm -f ./zapp.conf
-         for ipair in $(seq 1 $npair) ; do
-            echo $1 $2 >> zapp.conf
-            shift 2
-         done
-#for zn in $(seq 1 56) ; do
-#      cat << eof >> zapp.conf
-#      7  $2
-#      1   $4
-#eof
-#done
-
-
-       ccc_mprun -f zapp.conf
-               }
-# ---
-
 
 # function for running OPA with scalasca : it takes the number of procs and name of program as argument
 runcodescalasca() {
@@ -252,7 +215,6 @@ mk_batch_hdr() {
    wallclock=01:00:00
    nodes=1
    cores_per_node=28
-   queue='mpi_1'
 ##   mk_batch_hdr_core $@     # pass all input argument to the core of the function (in function_all)
 
 # on curie wall clock must be passed in seconds ( need to translate argument given as hh:mm:ss )
@@ -262,9 +224,11 @@ wallclock_second=$( echo $wallclock | awk -F: '{print $1*3600 +$2*60 +$3}')
 
 cat << eof 
 #!/bin/bash
-#PBS -q $queue
-#PBS -l select=$nodes:ncpus=$cores_per_node:mpiprocs=$cores_per_node:mem=110G 
-#PBS -l walltime=$wallclock
+#SBATCH --partition=cpu
+#SBATCH --nodes=$nodes
+#SBATCH --ntasks-per-node=$cores_per_node
+#SBATCH --mem=90G
+#SBATCH --time=$wallclock
 eof
                }
 
@@ -275,7 +239,6 @@ mk_batch_hdr_Zcmp() {
    wallclock=02:00:00
    nodes=1
    cores_per_node=28
-   queue='mpi'
 ##   mk_batch_hdr_core $@     # pass all input argument to the core of the function (in function_all)
 
 # on curie wall clock must be passed in seconds ( need to translate argument given as hh:mm:ss )
@@ -284,10 +247,12 @@ wallclock_second=$( echo $wallclock | awk -F: '{print $1*3600 +$2*60 +$3}')
 #  Build header for datarmor
 
 cat << eof 
-#!/bin/csh
-#PBS -q $queue
-#PBS -l select=$nodes:ncpus=$cores_per_node:mem=115G 
-#PBS -l walltime=$wallclock
+#!/bin/bash
+#SBATCH --partition=cpu
+#SBATCH --nodes=$nodes
+#SBATCH --ntasks-per-node=$cores_per_node
+#SBATCH --mem=90G
+#SBATCH --time=$wallclock
 eof
                }
 #-----------------------------------------------------------------------------------------

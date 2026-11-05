@@ -1,0 +1,31 @@
+
+NETCDF_LDFLAGS=`nf-config --flibs`
+NETCDF_INCDIR=`nf-config --includedir`
+NCDF=$(NETCDF_LDFLAGS) -I$(NETCDF_INCDIR)
+
+FFLAGS=$(NCDF) -fdefault-real-8 -O3 -funroll-all-loops -fcray-pointer -ffree-line-length-none
+F90=mpifc -fc=gfortran
+
+BINDIR = ../
+
+VPATH = $(BINDIR)
+
+
+
+
+mergefile4.exe: mergefile4.f90 modncfile.o modutil.o
+	$(F90) mergefile4.f90 -o $(BINDIR)/mergefile4.exe modncfile.o modutil.o $(FFLAGS)
+
+## Modules
+
+modncfile.o: modncfile.f90 
+	$(F90) -c  modncfile.f90  $(FFLAGS)
+
+modutil.o: modutil.f90  modncfile.o
+	$(F90) -c  modutil.f90 -o modutil.o  $(FFLAGS)
+
+clean:
+	rm -f  $(BINDIR)/*.exe *.mod *.o
+
+
+	

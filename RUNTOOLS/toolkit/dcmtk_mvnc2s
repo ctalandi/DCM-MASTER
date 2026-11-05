@@ -50,20 +50,43 @@ xios_mvnc2s() {
               for f in ${CONFIG}*-${CASE}_y????m??*.${freq}_*.nc ; do
                  tag=$( echo $f | awk -F_ '{print $2}')
                  year=${tag:1:4}
-                 mkdir -p $DDIR/$CONFIG/${CONFIG}-${CASE}-S/$freq/$year/
-                 mv $f  $DDIR/$CONFIG/${CONFIG}-${CASE}-S/$freq/$year/
-                 # To move scalar files 
-                 for f in ../${CONFIG}-${CASE}_*scalar_*-*.nc ; do
-                    ftype=` echo $f | awk -F_ '{print $3}'`
-                    mv  $f  $DDIR/$CONFIG/${CONFIG}-${CASE}-S/${freq}/$year/${CONFIG}-${CASE}_y${year}.${freq}_${ftype}_scalar.nc 
-                 done
+                 OUTFREQ='S'
+                 if [ ${freq} == '1m' ] ; then OUTFREQ='MEAN' ; fi 
+                 mkdir -p /scale/project/drakkarcom/SIMULATION-OUTPUTS/FREDY/CONFIGS/$CONFIG/${CONFIG}-${CASE}-${OUTFREQ}/$freq/$year/
+                 #mkdir -p $DDIR/$CONFIG/${CONFIG}-${CASE}-S/$freq/$year/
+                 rsync -rt $f  /scale/project/drakkarcom/SIMULATION-OUTPUTS/FREDY/CONFIGS/$CONFIG/${CONFIG}-${CASE}-${OUTFREQ}/$freq/$year/
+                 #mv $f    /scale/project/drakkarcom/SIMULATION-OUTPUTS/FREDY/CONFIGS/$CONFIG/${CONFIG}-${CASE}-${OUTFREQ}/$freq/$year/
+                 #mv $f  $DDIR/$CONFIG/${CONFIG}-${CASE}-S/$freq/$year/
               done
+
+              if [ ${freq} == '5d' ] ; then 
+                   for f in ../${CONFIG}-${CASE}_*scalar_*-*.nc ; do
+                      mkdir -p /scale/project/drakkarcom/SIMULATION-OUTPUTS/FREDY/CONFIGS/$CONFIG/${CONFIG}-${CASE}-MEAN/1m/$year/
+                      #mkdir -p $DDIR/$CONFIG/${CONFIG}-${CASE}-MEAN/1m/$year/
+	              ftype=` echo $f | awk -F_ '{print $3}'`
+                      rsync -rt  $f  /scale/project/drakkarcom/SIMULATION-OUTPUTS/FREDY/CONFIGS/$CONFIG/${CONFIG}-${CASE}-MEAN/1m/$year/${CONFIG}-${CASE}_y${year}.${freq}_${ftype}_scalar.nc 
+                      #cp $f  $DDIR/$CONFIG/${CONFIG}-${CASE}-MEAN/1m/$year/${CONFIG}-${CASE}_y${year}.${freq}_${ftype}_scalar.nc 
+                      #mv $f  $DDIR/$CONFIG/${CONFIG}-${CASE}-MEAN/1m/$year/${CONFIG}-${CASE}_y${year}.${freq}_${ftype}_scalar.nc 
+                   done
+              fi 
             else
                echo no files to transmit in $d
             fi
             cd ../
          fi
        done
+
+       if [ ${freq} == '1m' ] ; then 
+           for f in ${CONFIG}-${CASE}_*scalar_*-*.nc ; do
+              mkdir -p /scale/project/drakkarcom/SIMULATION-OUTPUTS/FREDY/CONFIGS/$CONFIG/${CONFIG}-${CASE}-MEAN/${freq}/$year/
+	      ftype=` echo $f | awk -F_ '{print $3}'`
+              rsync -rt $f  /scale/project/drakkarcom/SIMULATION-OUTPUTS/FREDY/CONFIGS/$CONFIG/${CONFIG}-${CASE}-MEAN/${freq}/$year/${CONFIG}-${CASE}_y${year}.1m_${ftype}_scalar.nc
+              #mkdir -p $DDIR/$CONFIG/${CONFIG}-${CASE}-MEAN/${freq}/$year/
+              #mv $f  $DDIR/$CONFIG/${CONFIG}-${CASE}-MEAN/${freq}/$year/${CONFIG}-${CASE}_y${year}.1m_SBC_scalar.nc
+           done
+
+       fi
+
        cd $here  # back to root dir where mvnc2s was launched
      done
               }
@@ -121,8 +144,6 @@ if [ $tmp  !=  0 ] ; then
 fi
 
 DDIR=${DDIR:-$CDIR}
-if [ $MACHINE = 'jean-zay' ] ; then DDIR=$WORK ; fi
-if [ $MACHINE = 'datarmor' ] ; then DDIR=/scale/project/drakkarcom/SIMULATION-OUTPUTS/CLIMARCTIC/MYLOGIN ; fi
 
 # look for ensemble run ? (in this case nnn subdirectory (3digits) 
 

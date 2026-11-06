@@ -1354,7 +1354,8 @@ case $STOP_FLAG in
 
                 cd  $DDIR/${CONFIG_CASE}-${DIROUText}.$ext
 
-		f=`ls ${CONFIG}-${CASE}_1m_OCE_scalar_*01_0000.nc`
+		f=`ls ${CONFIG}-${CASE}_1m_OCE_scalar.nc`
+		#f=`ls ${CONFIG}-${CASE}_1m_OCE_scalar_*01_0000.nc`
                 tmp=${f##*-} ; indastp=${tmp%.nc}
                 zyear=${indastp:0:4}
 		mk_scal_mon $zyear

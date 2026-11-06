@@ -419,6 +419,7 @@ getbdy_bio()  {
             for bdyset in $( seq 0 $(( nb_bdy-1)) ); do
                 echo "  ***  get bdy files for top model, bdy set $bdyset"
                 filter=''
+                echo "INSIDE getbdy_bio bdyset:$bdyset nb_bdy:$nb_bdy"
                 blk=namtrc_bc ; getfiles $blk  $P_BDY_DIR $F_BDY_DIR BDY${bdyset}${nb_bdy}
 	    done
         fi
@@ -1570,6 +1571,10 @@ rename_out() {
                 ztag=y${zyy}.$zfreq
             elif [ ${zfreq} == '1m' ]  ;  then
                 ztag=y${zyy}m${zmm}.$zfreq
+		# When 1 file has 12 monthly means outputs
+                if [ ${ztag} == "y${zyy}m00.$zfreq" ] ; then 
+                    ztag=y${zyy}.$zfreq
+		fi
             elif [ ${zfreq} == '5d' ]  ;  then
                 ztag=y${zyy}m${zmm}d${zdd}.$zfreq
             elif [ ${zfreq} == '1d' ]  ;  then
@@ -1748,11 +1753,7 @@ update_db_file()  {
 
      # aammdd is the ndastp of the last day of the run ...
      # where can we get it ???? : in the ocean.output for sure !!
-     if [ $TOP = 1  ]  ; then 
-         aammdd=$( cat $output_ref | grep -1 date | tail -1 | awk '{print $NF}' )
-     else
-         aammdd=$( cat $output_ref | grep date | tail -1 | awk '{print $NF}' )
-     fi
+     aammdd=$( cat $output_ref | grep date | tail -1 | awk '{print $NF}' )
 
     # Look for line in db file  with only 3 columns, keep this line in last
     last=$( cat $CONFIG_CASE.db | awk ' NF == 3 ' )

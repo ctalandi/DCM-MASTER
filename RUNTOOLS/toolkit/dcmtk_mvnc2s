@@ -45,9 +45,9 @@ xios_mvnc2s() {
             echo $freq
             mkdir -p $DDIR/$CONFIG/${CONFIG}-${CASE}-S/$freq/
             cd $d
-            nfil=$( ls -1 ${CONFIG}*-${CASE}_y????m??*.${freq}_*.nc 2>/dev/null | wc -l )
+            nfil=$( ls -1 ${CONFIG}*-${CASE}_y????*.${freq}_*.nc 2>/dev/null | wc -l )
             if [ $nfil != 0 ] ; then
-              for f in ${CONFIG}*-${CASE}_y????m??*.${freq}_*.nc ; do
+              for f in ${CONFIG}*-${CASE}_y????*.${freq}_*.nc ; do
                  tag=$( echo $f | awk -F_ '{print $2}')
                  year=${tag:1:4}
 
@@ -145,8 +145,9 @@ if [ $tmp  !=  0 ] ; then
 fi
 
 DDIR=${DDIR:-$CDIR}
+MACHINE='datarmor'
 if [ $MACHINE = 'jean-zay' ] ; then DDIR=$WORK ; fi
-if [ $MACHINE = 'datarmor' ] ; then DDIR=/scale/project/drakkarcom/SIMULATION-OUTPUTS/CLIMARCTIC/MYLOGIN ; fi
+if [ $MACHINE = 'datarmor' ] ; then DDIR=/scale/project/drakkarcom/SIMULATION-OUTPUTS/FREDY/CONFIGS ; fi
 
 # look for ensemble run ? (in this case nnn subdirectory (3digits) 
 

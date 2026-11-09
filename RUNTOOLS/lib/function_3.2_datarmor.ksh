@@ -120,7 +120,7 @@ submit() { cd ${P_CTL_DIR}
 #           sbatch -x $(cat ~/.bad_node) $1 > $TMPDIR/logsubmit 
 #           else
 #           sbatch $1 > $TMPDIR/logsubmit 
-           qsub $1 > $TMPDIR/logsubmit 
+           sbatch $1 > $TMPDIR/logsubmit 
 #           fi
            cd $TMPDIR 
          }

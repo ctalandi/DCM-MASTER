@@ -260,15 +260,17 @@ eof
 mk_scal_mon() {
                 if [ ! -d 1m_OUTPUT ] ;  then mkdir -p 1m_OUTPUT ; fi 
 		zyear=$1
-		for filet in `echo ICE OCE `  ; do 
-			taglist=''  ; zm=1
-			while [ ${zm} -le 12 ] ; do 
-				zzm=$( printf "%02d" $zm ) 
-				taglist="$taglist ${CONFIG}-${CASE}_1m_${filet}_scalar_${zyear}${zzm}-${zyear}${zzm}_0000.nc " 
-				let zm=${zm}+1
-			done
-			ncrcat ${taglist}  ./1m_OUTPUT/${CONFIG}-${CASE}_1m_${filet}_scalar_${zyear}01-${zyear}12.nc
-			mv ${taglist} ./1m_OUTPUT/
+		for filet in `echo ICE_scalar OCE_scalar BIO_scalar `  ; do 
+		#	taglist=''  ; zm=1
+		#	while [ ${zm} -le 12 ] ; do 
+		#		zzm=$( printf "%02d" $zm ) 
+		#		taglist="$taglist ${CONFIG}-${CASE}_1m_${filet}_scalar_${zyear}${zzm}-${zyear}${zzm}_0000.nc " 
+		#		let zm=${zm}+1
+		#	done
+		#	ncrcat ${taglist}  ./1m_OUTPUT/${CONFIG}-${CASE}_1m_${filet}_scalar_${zyear}01-${zyear}12.nc
+			taglist='${CONFIG}-${CASE}_1m_${filet}_scalar_${zyear}-${zyear}.nc'
+			CREG025.L75-NEMO423PIS_1m_bioscalar_1983-1983.nc
+			mv ${taglist} ./1m_OUTPUT/${CONFIG}-${CASE}_y${zyear}.1m_${filet}.nc
 		done 
 
 		}

@@ -51,8 +51,7 @@ xios_mvnc2s() {
                  tag=$( echo $f | awk -F_ '{print $2}')
                  year=${tag:1:4}
 
-                 OUTFREQ='S'
-                 if [ ${freq} == '1m' ] ; then OUTFREQ='MEAN' ; fi 
+                 OUTFREQ='MEAN'
                  mkdir -p /scale/project/drakkarcom/SIMULATION-OUTPUTS/FREDY/CONFIGS/$CONFIG/${CONFIG}-${CASE}-${OUTFREQ}/$freq/$year/
                  #mkdir -p $DDIR/$CONFIG/${CONFIG}-${CASE}-S/$freq/$year/
                  rsync -rt $f  /scale/project/drakkarcom/SIMULATION-OUTPUTS/FREDY/CONFIGS/$CONFIG/${CONFIG}-${CASE}-${OUTFREQ}/$freq/$year/
@@ -60,16 +59,16 @@ xios_mvnc2s() {
                  #mv $f  $DDIR/$CONFIG/${CONFIG}-${CASE}-S/$freq/$year/
               done
 
-              if [ ${freq} == '5d' ] ; then 
-                   for f in ../${CONFIG}-${CASE}_*scalar_*-*.nc ; do
-                      mkdir -p /scale/project/drakkarcom/SIMULATION-OUTPUTS/FREDY/CONFIGS/$CONFIG/${CONFIG}-${CASE}-MEAN/1m/$year/
-                      #mkdir -p $DDIR/$CONFIG/${CONFIG}-${CASE}-MEAN/1m/$year/
-	              ftype=` echo $f | awk -F_ '{print $3}'`
-                      rsync -rt  $f  /scale/project/drakkarcom/SIMULATION-OUTPUTS/FREDY/CONFIGS/$CONFIG/${CONFIG}-${CASE}-MEAN/1m/$year/${CONFIG}-${CASE}_y${year}.${freq}_${ftype}_scalar.nc 
-                      #cp $f  $DDIR/$CONFIG/${CONFIG}-${CASE}-MEAN/1m/$year/${CONFIG}-${CASE}_y${year}.${freq}_${ftype}_scalar.nc 
-                      #mv $f  $DDIR/$CONFIG/${CONFIG}-${CASE}-MEAN/1m/$year/${CONFIG}-${CASE}_y${year}.${freq}_${ftype}_scalar.nc 
-                   done
-              fi 
+              #if [ ${freq} == '5d' ] ; then 
+              for f in ../${CONFIG}-${CASE}_${freq}_*scalar_*-*.nc ; do
+                 mkdir -p /scale/project/drakkarcom/SIMULATION-OUTPUTS/FREDY/CONFIGS/$CONFIG/${CONFIG}-${CASE}-MEAN/$freq/$year/
+                 #mkdir -p $DDIR/$CONFIG/${CONFIG}-${CASE}-MEAN/1m/$year/
+	         ftype=` echo $f | awk -F_ '{print $3}'`
+                 rsync -rt  $f  /scale/project/drakkarcom/SIMULATION-OUTPUTS/FREDY/CONFIGS/$CONFIG/${CONFIG}-${CASE}-MEAN/$freq/$year/${CONFIG}-${CASE}_y${year}.${freq}_${ftype}_scalar.nc 
+                 #cp $f  $DDIR/$CONFIG/${CONFIG}-${CASE}-MEAN/1m/$year/${CONFIG}-${CASE}_y${year}.${freq}_${ftype}_scalar.nc 
+                 #mv $f  $DDIR/$CONFIG/${CONFIG}-${CASE}-MEAN/1m/$year/${CONFIG}-${CASE}_y${year}.${freq}_${ftype}_scalar.nc 
+              done
+              #fi 
             else
                echo no files to transmit in $d
             fi

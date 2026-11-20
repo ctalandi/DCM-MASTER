@@ -171,11 +171,27 @@ else
     prev_ext=1
 fi
 
+# Check if multi-restarts needed
+tmp=$(LookInNamelist ln_rst_list namelist_oce namrun ) ; tmp=$(normalize $tmp)
+if [ $tmp = T ] ; then MULTI_RST=1 ; fi
+
+nrst1=0 ; nrst2=0 ; nrst3=0
+if [ $MULTI_RST = 1 ] ; then   #
+    rdt=$(LookInNamelist rn_Dt namelist_oce namdom)
+    Drst=`echo 1 | awk "{ a=int( (365*86400/$rdt) ) ; print a }" `
+    nrst1=$(( $nit000-1 + $Drst ))
+    nrst2=$(( $nrst1  + $Drst ))
+    nrst3=$(( $nrst2  + $Drst ))
+fi
+
 sed -e "s/<NN_NO>/$no/" \
     -e "s/<CONFCASE>/$CONFIG_CASE/" \
     -e "s/<NIT000>/$nit000/" \
     -e "s/<NITEND>/$nitend/" \
     -e "s/<RESTART>/$restart_flag/" \
+    -e "s/<NRST1>/$nrst1/" \
+    -e "s/<NRST2>/$nrst2/" \
+    -e "s/<NRST3>/$nrst3/" \
     -e "s/<OCERST_IN>/restart-$prev_ext/" \
     -e "s/<OCERST_OUT>/restart/" \
     -e "s@<CN_IN_OCERST>@$DDIR/${CN_DIRRST}.$prev_ext@"   \

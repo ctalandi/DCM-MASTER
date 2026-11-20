@@ -1577,6 +1577,10 @@ rename_out() {
 		fi
             elif [ ${zfreq} == '5d' ]  ;  then
                 ztag=y${zyy}m${zmm}d${zdd}.$zfreq
+		# When 1 file has 73 5d means outputs
+                if [ ${ztag} == "y${zyy}m00d00.$zfreq" ] ; then 
+                    ztag=y${zyy}.$zfreq
+		fi
             elif [ ${zfreq} == '1d' ]  ;  then
                 ztag=y${zyy}m${zmm}d${zdd}.$zfreq
             elif [ ${zfreq} == '1h' ]  ;  then

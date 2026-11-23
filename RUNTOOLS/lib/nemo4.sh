@@ -172,12 +172,12 @@ else
 fi
 
 # Check if multi-restarts needed
-tmp=$(LookInNamelist ln_rst_list namelist_oce namrun ) ; tmp=$(normalize $tmp)
+tmp=$(LookInNamelist ln_rst_list namelist_cfg namrun ) ; tmp=$(normalize $tmp)
 if [ $tmp = T ] ; then MULTI_RST=1 ; fi
 
 nrst1=0 ; nrst2=0 ; nrst3=0
 if [ $MULTI_RST = 1 ] ; then   #
-    rdt=$(LookInNamelist rn_Dt namelist_oce namdom)
+    rdt=$(LookInNamelist rn_Dt namelist_cfg namdom)
     Drst=`echo 1 | awk "{ a=int( (365*86400/$rdt) ) ; print a }" `
     nrst1=$(( $nit000-1 + $Drst ))
     nrst2=$(( $nrst1  + $Drst ))
